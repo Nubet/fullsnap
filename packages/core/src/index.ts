@@ -58,17 +58,11 @@ export class CaptureService {
 
     const stabStart = performance.now();
     try {
-      // Set a hard timeout of 15 seconds for stabilization
-      await Promise.race([
-        scrollEngine.scrollToEnd().then(() => stabilizer.waitForStableState()),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Stabilization timeout')), 15000))
-      ]);
+      await scrollEngine.scrollToEnd();
     } catch (e) {
       warnings.push({ type: 'layout-instability', message: String(e) });
     }
     const stabilizationTime = performance.now() - stabStart;
-
-    await page.evaluate(() => window.scrollTo(0, 0));
 
     const parsedUrl = new URL(url);
     const hostDir = parsedUrl.hostname.replace(/[^a-z0-9]/gi, '_');

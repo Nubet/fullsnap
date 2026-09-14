@@ -1,4 +1,7 @@
 import { Command } from 'commander';
+import { CaptureService } from '@fullsnap/core';
+import { ConfigSchema } from '@fullsnap/config';
+import { DEFAULT_DEVICES } from '@fullsnap/shared';
 
 export function createCli(): Command {
   const program = new Command();
@@ -10,8 +13,27 @@ export function createCli(): Command {
 
   program
     .argument('<url>', 'URL to capture')
-    .action((url) => {
+    .action(async (url: string) => {
       console.log(`Starting capture for: ${url}`);
+      
+      const config = ConfigSchema.parse({});
+      const captureService = new CaptureService(config);
+      
+      try {
+        await captureService.init();
+        
+        for (const device of DEFAULT_DEVICES) {
+          console.log(`Capturing ${device.name}...`);
+          await captureService.capture(url, device);
+        }
+        
+        console.log('Capture completed successfully.');
+      } catch (error) {
+        console.error('Error during capture:', error);
+        process.exit(1);
+      } finally {
+        await captureService.close();
+      }
     });
 
   return program;

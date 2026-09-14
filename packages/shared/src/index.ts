@@ -9,3 +9,20 @@ export interface DeviceProfile {
   hasTouch: boolean;
   userAgent?: string;
 }
+
+export const DEFAULT_DEVICES: DeviceProfile[] = [
+  {
+    name: 'desktop',
+    viewport: { width: 1440, height: 900 },
+    deviceScaleFactor: 1,
+    isMobile: false,
+    hasTouch: false,
+  },
+  {
+    name: 'mobile',
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  }
+];

@@ -20,15 +20,6 @@ importers:
 
   apps/cli:
     dependencies:
-      '@norbert-fila/config':
-        specifier: workspace:*
-        version: link:../../packages/config
-      '@norbert-fila/core':
-        specifier: workspace:*
-        version: link:../../packages/core
-      '@norbert-fila/shared':
-        specifier: workspace:*
-        version: link:../../packages/shared
       cli-table3:
         specifier: ^0.6.5
         version: 0.6.5
@@ -51,6 +42,15 @@ importers:
         specifier: ^3.22.4
         version: 3.25.76
     devDependencies:
+      '@norbert-fila/config':
+        specifier: workspace:*
+        version: link:../../packages/config
+      '@norbert-fila/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@norbert-fila/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       '@types/prompts':
         specifier: ^2.4.9
         version: 2.4.9

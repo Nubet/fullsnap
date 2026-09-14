@@ -22,7 +22,7 @@ export class CaptureService {
     }
   }
 
-  async capture(url: string, device: DeviceProfile): Promise<CaptureResult> {
+  async capture(url: string, device: DeviceProfile, outputDir: string): Promise<CaptureResult> {
     if (!this.browser) {
       throw new Error('CaptureService not initialized');
     }
@@ -67,10 +67,8 @@ export class CaptureService {
     // Flatten fixed/sticky elements so they don't appear in the middle of the screenshot
     await stabilizer.flattenFixedElements();
 
-    const parsedUrl = new URL(url);
-    const hostDir = parsedUrl.hostname.replace(/[^a-z0-9]/gi, '_');
     const fileName = `${device.name}.png`;
-    const outputPath = path.join(process.cwd(), hostDir, fileName);
+    const outputPath = path.join(outputDir, fileName);
 
     await page.screenshot({ path: outputPath, fullPage: true });
 

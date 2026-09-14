@@ -11,9 +11,12 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "commander": "^12.1.0",
-    "@fullsnap/core": "workspace:*",
     "@fullsnap/config": "workspace:*",
-    "@fullsnap/shared": "workspace:*"
+    "@fullsnap/core": "workspace:*",
+    "@fullsnap/shared": "workspace:*",
+    "cli-table3": "^0.6.5",
+    "commander": "^12.1.0",
+    "ora": "^9.4.1",
+    "picocolors": "^1.1.1"
   }
 }

@@ -5,6 +5,9 @@ import { DEFAULT_DEVICES, runWithConcurrency } from '@fullsnap/shared';
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { URL } from 'node:url';
+import ora from 'ora';
+import Table from 'cli-table3';
+import pc from 'picocolors';
 
 export function createCli(): Command {
   const program = new Command();
@@ -19,10 +22,11 @@ export function createCli(): Command {
     .option('-a, --all', 'Capture all available devices in the registry')
     .option('-d, --devices <list>', 'Comma-separated list of devices to capture (e.g. "iphone-14,desktop-1920")')
     .action(async (url: string, options) => {
-      console.log(`Starting capture for: ${url}`);
+      console.log(pc.bold(pc.cyan(`\n📸 Fullsnap: Visual Inspection\n`)));
       
       const config = await loadConfig(process.cwd());
       const captureService = new CaptureService(config);
+      const spinner = ora('Initializing CaptureService...').start();
       
       try {
         await captureService.init();
@@ -31,26 +35,19 @@ export function createCli(): Command {
         
         if (options.all) {
           targetDevices = [...DEFAULT_DEVICES];
-          console.log(`Override: Capturing ALL ${DEFAULT_DEVICES.length} devices.`);
         } else if (options.devices) {
           const requested = options.devices.split(',').map((s: string) => s.trim());
           targetDevices = DEFAULT_DEVICES.filter(d => requested.includes(d.name));
-          console.log(`Override: Capturing specified devices: ${requested.join(', ')}`);
         } else {
-          // Default to config
           targetDevices = DEFAULT_DEVICES.filter(d => config.devices.includes(d.name));
         }
         
         if (targetDevices.length === 0) {
-          console.warn('No matching devices found in overrides or config. Capturing all default devices.');
           targetDevices = [...DEFAULT_DEVICES];
         }
 
-        console.log(`Running captures with concurrency: ${config.capture.concurrency}`);
-        
-        // Generate a sortable timestamp: YYYY-MM-DD_HH-mm-ss
         const now = new Date();
-        const tzOffset = now.getTimezoneOffset() * 60000; // local offset
+        const tzOffset = now.getTimezoneOffset() * 60000;
         const localISOTime = (new Date(Date.now() - tzOffset)).toISOString().slice(0, -1);
         const timestamp = localISOTime.replace('T', '_').replace(/:/g, '-').split('.')[0];
         
@@ -58,28 +55,69 @@ export function createCli(): Command {
         const outputDir = join(process.cwd(), config.output || '.', hostDir, timestamp);
         mkdirSync(outputDir, { recursive: true });
 
-        console.log(`\nOutput directory: ${outputDir}\n`);
+        const total = targetDevices.length;
+        let completed = 0;
+        
+        spinner.text = `Capturing 0/${total} devices (Concurrency: ${config.capture.concurrency})...`;
 
         const results = await runWithConcurrency(
           targetDevices, 
           config.capture.concurrency, 
           async (device) => {
-            console.log(`[▶] Capturing ${device.name}...`);
             const res = await captureService.capture(url, device, outputDir);
-            console.log(`[✓] Captured ${device.name} in ${res.metrics.stabilizationTime}ms`);
+            
+            const timeStr = ((res.metrics.loadTime + res.metrics.stabilizationTime) / 1000).toFixed(1) + 's';
+            
+            spinner.clear(); // Temporarily clear spinner to print line above it
             if (res.warnings.length) {
-              console.warn(`[⚠] ${device.name} warnings:`, res.warnings.map(w => w.type).join(', '));
+              console.log(`${pc.yellow('⚠')} ${pc.bold(device.name)} captured in ${timeStr} ${pc.gray(`(${res.warnings.map(w => w.type).join(', ')})`)}`);
+            } else {
+              console.log(`${pc.green('✔')} ${pc.bold(device.name)} captured in ${timeStr}`);
             }
+            
+            completed++;
+            spinner.text = `Capturing ${completed}/${total} devices (Concurrency: ${config.capture.concurrency})...`;
+            
             return res;
           }
         );
         
+        spinner.succeed(`Capture complete! Output saved to: ${pc.gray(outputDir)}`);
+
         const reportPath = join(outputDir, 'report.json');
-        
         writeFileSync(reportPath, JSON.stringify({ results }, null, 2));
-        console.log(`\nCapture completed successfully. Report saved to: ${reportPath}`);
+
+        const table = new Table({
+          head: [
+            pc.bold('Device'), 
+            pc.bold('Viewport'), 
+            pc.bold('Time'), 
+            pc.bold('Status'), 
+            pc.bold('Warnings')
+          ],
+          style: { head: [] } 
+        });
+
+        for (const res of results) {
+          const isWarn = res.warnings.length > 0;
+          const status = res.status === 'error' ? pc.red('ERROR') : (isWarn ? pc.yellow('WARNING') : pc.green('SUCCESS'));
+          const warningsStr = isWarn ? res.warnings.map(w => w.type).join(', ') : pc.gray('None');
+          const timeStr = ((res.metrics.loadTime + res.metrics.stabilizationTime) / 1000).toFixed(1) + 's';
+          const viewport = `${res.device.viewport.width}x${res.device.viewport.height}`;
+
+          table.push([
+            res.device.name,
+            viewport,
+            timeStr,
+            status,
+            warningsStr
+          ]);
+        }
+
+        console.log('\n' + table.toString() + '\n');
       } catch (error) {
-        console.error('Error during capture:', error);
+        spinner.fail(`Capture failed.`);
+        console.error(pc.red(String(error)));
         process.exit(1);
       } finally {
         await captureService.close();

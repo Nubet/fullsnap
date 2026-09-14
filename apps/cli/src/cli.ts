@@ -1,5 +1,5 @@
 import { Command } from 'commander';
-import { CaptureService } from '@fullsnap/core';
+import { CaptureService, waitForServer } from '@fullsnap/core';
 import { loadConfig } from '@fullsnap/config';
 import { DEFAULT_DEVICES, runWithConcurrency } from '@fullsnap/shared';
 import { writeFileSync, mkdirSync } from 'node:fs';
@@ -26,9 +26,15 @@ export function createCli(): Command {
       
       const config = await loadConfig(process.cwd());
       const captureService = new CaptureService(config);
-      const spinner = ora('Initializing CaptureService...').start();
+      const spinner = ora('Checking target environment...').start();
       
       try {
+        if (url.includes('localhost') || url.includes('127.0.0.1')) {
+          spinner.text = 'Waiting for local development server to respond...';
+          await waitForServer(url);
+        }
+
+        spinner.text = 'Initializing CaptureService...';
         await captureService.init();
         
         let targetDevices = [];

@@ -89,3 +89,5 @@ export class CaptureService {
     };
   }
 }
+
+export { waitForServer } from './utils/wait-for-server.js';

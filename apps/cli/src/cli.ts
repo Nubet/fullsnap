@@ -2,12 +2,13 @@ import { Command } from 'commander';
 import { CaptureService, waitForServer } from '@fullsnap/core';
 import { loadConfig } from '@fullsnap/config';
 import { DEFAULT_DEVICES, runWithConcurrency } from '@fullsnap/shared';
-import { writeFileSync, mkdirSync } from 'node:fs';
+import { writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { URL } from 'node:url';
 import ora from 'ora';
 import Table from 'cli-table3';
 import pc from 'picocolors';
+import prompts from 'prompts';
 
 export function createCli(): Command {
   const program = new Command();
@@ -18,10 +19,88 @@ export function createCli(): Command {
     .version('0.1.0');
 
   program
-    .argument('<url>', 'URL to capture')
+    .command('init')
+    .description('Initialize a new fullsnap configuration file via interactive wizard')
+    .action(async () => {
+      console.log(pc.bold(pc.cyan(`\n📸 Initialize Fullsnap\n`)));
+      
+      const configPath = join(process.cwd(), 'fullsnap.config.js');
+      if (existsSync(configPath)) {
+        const { overwrite } = await prompts({
+          type: 'confirm',
+          name: 'overwrite',
+          message: 'fullsnap.config.js already exists. Overwrite?',
+          initial: false
+        });
+        if (!overwrite) {
+          console.log(pc.gray('Aborted.'));
+          return;
+        }
+      }
+
+      const response = await prompts([
+        {
+          type: 'text',
+          name: 'outputDir',
+          message: 'Where should screenshots be saved?',
+          initial: './screenshots'
+        },
+        {
+          type: 'number',
+          name: 'concurrency',
+          message: 'How many browser tabs should run in parallel? (Lower is safer for RAM)',
+          initial: 2,
+          min: 1,
+          max: 10
+        },
+        {
+          type: 'multiselect',
+          name: 'devices',
+          message: 'Select default devices to test on:',
+          choices: DEFAULT_DEVICES.map(d => ({
+            title: `${d.name} ${pc.gray(`(${d.viewport.width}x${d.viewport.height})`)}`,
+            value: d.name,
+            selected: ['desktop-1920', 'macbook-pro-14', 'iphone-15-pro', 'galaxy-s24'].includes(d.name)
+          })),
+          min: 1,
+          hint: '- Space to select. Return to submit'
+        }
+      ]);
+
+      if (!response.devices) {
+        console.log(pc.red('Initialization cancelled.'));
+        return;
+      }
+
+      const configContent = `export default {
+  devices: [
+    ${response.devices.map((d: string) => `'${d}'`).join(',\n    ')}
+  ],
+  capture: {
+    format: 'png',
+    animations: 'disable',
+    concurrency: ${response.concurrency}
+  },
+  output: '${response.outputDir}'
+};
+`;
+      writeFileSync(configPath, configContent);
+      console.log(pc.green(`\n✔ Created fullsnap.config.js successfully!\n`));
+      console.log(`You can now run: ${pc.cyan('fullsnap https://your-website.com')}\n`);
+    });
+
+  // Main capture command
+  program
+    .argument('[url]', 'URL to capture')
     .option('-a, --all', 'Capture all available devices in the registry')
     .option('-d, --devices <list>', 'Comma-separated list of devices to capture (e.g. "iphone-14,desktop-1920")')
-    .action(async (url: string, options) => {
+    .action(async (url: string | undefined, options) => {
+      // If the user runs `fullsnap` without a URL or command, show help.
+      if (!url) {
+        program.help();
+        return;
+      }
+
       console.log(pc.bold(pc.cyan(`\n📸 Fullsnap: Visual Inspection\n`)));
       
       const config = await loadConfig(process.cwd());
@@ -74,7 +153,7 @@ export function createCli(): Command {
             
             const timeStr = ((res.metrics.loadTime + res.metrics.stabilizationTime) / 1000).toFixed(1) + 's';
             
-            spinner.clear(); // Temporarily clear spinner to print line above it
+            spinner.clear();
             if (res.warnings.length) {
               console.log(`${pc.yellow('⚠')} ${pc.bold(device.name)} captured in ${timeStr} ${pc.gray(`(${res.warnings.map(w => w.type).join(', ')})`)}`);
             } else {

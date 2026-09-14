@@ -1,0 +1,19 @@
+{
+  "name": "fullsnap",
+  "version": "0.1.0",
+  "type": "module",
+  "bin": {
+    "fullsnap": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "commander": "^12.1.0",
+    "@fullsnap/core": "workspace:*",
+    "@fullsnap/config": "workspace:*",
+    "@fullsnap/shared": "workspace:*"
+  }
+}

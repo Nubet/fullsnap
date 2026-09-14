@@ -1,8 +1,9 @@
 import { chromium, type Browser } from 'playwright';
 import type { Config } from '@fullsnap/config';
-import type { DeviceProfile } from '@fullsnap/shared';
+import type { DeviceProfile, CaptureResult, CaptureWarning } from '@fullsnap/shared';
 import path from 'node:path';
 import { URL } from 'node:url';
+import { performance } from 'node:perf_hooks';
 import { PageStabilizer } from './stabilization/page-stabilizer.js';
 import { ScrollEngine } from './scrolling/scroll-engine.js';
 
@@ -21,11 +22,12 @@ export class CaptureService {
     }
   }
 
-  async capture(url: string, device: DeviceProfile): Promise<void> {
+  async capture(url: string, device: DeviceProfile): Promise<CaptureResult> {
     if (!this.browser) {
       throw new Error('CaptureService not initialized');
     }
 
+    const warnings: CaptureWarning[] = [];
     const context = await this.browser.newContext({
       viewport: device.viewport,
       deviceScaleFactor: device.deviceScaleFactor,
@@ -38,9 +40,14 @@ export class CaptureService {
     const stabilizer = new PageStabilizer(page);
     const scrollEngine = new ScrollEngine(page, stabilizer);
     
-    await page.goto(url, { waitUntil: 'domcontentloaded' });
+    const loadStart = performance.now();
+    try {
+      await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
+    } catch (e) {
+      warnings.push({ type: 'navigation-timeout', message: String(e) });
+    }
+    const loadTime = performance.now() - loadStart;
 
-    // Wait for fonts
     await page.evaluate(async () => {
       await document.fonts.ready;
     });
@@ -49,12 +56,19 @@ export class CaptureService {
       await stabilizer.disableAnimations();
     }
 
-    // Scroll through the entire page
-    await scrollEngine.scrollToEnd();
+    const stabStart = performance.now();
+    try {
+      // Set a hard timeout of 15 seconds for stabilization
+      await Promise.race([
+        scrollEngine.scrollToEnd().then(() => stabilizer.waitForStableState()),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Stabilization timeout')), 15000))
+      ]);
+    } catch (e) {
+      warnings.push({ type: 'layout-instability', message: String(e) });
+    }
+    const stabilizationTime = performance.now() - stabStart;
 
-    // Reset scroll to top before screenshot (Playwright handles fullPage internally, but good practice)
     await page.evaluate(() => window.scrollTo(0, 0));
-    await stabilizer.waitForStableState();
 
     const parsedUrl = new URL(url);
     const hostDir = parsedUrl.hostname.replace(/[^a-z0-9]/gi, '_');
@@ -64,5 +78,19 @@ export class CaptureService {
     await page.screenshot({ path: outputPath, fullPage: true });
 
     await context.close();
+
+    return {
+      url,
+      device,
+      screenshotPath: outputPath,
+      status: warnings.length > 0 ? 'error' : 'success',
+      metrics: {
+        width: device.viewport.width,
+        height: device.viewport.height,
+        loadTime: Math.round(loadTime),
+        stabilizationTime: Math.round(stabilizationTime)
+      },
+      warnings
+    };
   }
 }

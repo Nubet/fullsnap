@@ -1,5 +1,5 @@
 {
-  "name": "@fullsnap/core",
+  "name": "@norbert-fila/core",
   "version": "0.1.0",
   "type": "module",
   "main": "./dist/index.js",
@@ -11,7 +11,10 @@
   },
   "dependencies": {
     "playwright": "^1.44.1",
-    "@fullsnap/config": "workspace:*",
-    "@fullsnap/shared": "workspace:*"
+    "@norbert-fila/config": "workspace:*",
+    "@norbert-fila/shared": "workspace:*"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

@@ -1,7 +1,7 @@
 import { Command } from 'commander';
-import { CaptureService, waitForServer } from '@fullsnap/core';
-import { loadConfig } from '@fullsnap/config';
-import { DEFAULT_DEVICES, runWithConcurrency } from '@fullsnap/shared';
+import { CaptureService, waitForServer } from '@norbert-fila/core';
+import { loadConfig } from '@norbert-fila/config';
+import { DEFAULT_DEVICES, runWithConcurrency } from '@norbert-fila/shared';
 import { writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { URL } from 'node:url';

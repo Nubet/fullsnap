@@ -1,5 +1,5 @@
 {
-  "name": "@fullsnap/config",
+  "name": "@norbert-fila/config",
   "version": "0.1.0",
   "type": "module",
   "main": "./dist/index.js",
@@ -11,6 +11,9 @@
   },
   "dependencies": {
     "zod": "^3.23.8",
-    "@fullsnap/shared": "workspace:*"
+    "@norbert-fila/shared": "workspace:*"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

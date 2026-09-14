@@ -1,5 +1,5 @@
 {
-  "name": "fullsnap",
+  "name": "@norbert-fila/fullsnap",
   "version": "0.1.0",
   "type": "module",
   "bin": {
@@ -11,9 +11,9 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@fullsnap/config": "workspace:*",
-    "@fullsnap/core": "workspace:*",
-    "@fullsnap/shared": "workspace:*",
+    "@norbert-fila/config": "workspace:*",
+    "@norbert-fila/core": "workspace:*",
+    "@norbert-fila/shared": "workspace:*",
     "cli-table3": "^0.6.5",
     "commander": "^12.1.0",
     "ora": "^9.4.1",
@@ -22,5 +22,8 @@
   },
   "devDependencies": {
     "@types/prompts": "^2.4.9"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

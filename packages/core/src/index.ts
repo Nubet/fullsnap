@@ -1,6 +1,6 @@
 import { chromium, type Browser } from 'playwright';
-import type { Config } from '@fullsnap/config';
-import type { DeviceProfile, CaptureResult, CaptureWarning } from '@fullsnap/shared';
+import type { Config } from '@norbert-fila/config';
+import type { DeviceProfile, CaptureResult, CaptureWarning } from '@norbert-fila/shared';
 import path from 'node:path';
 import { URL } from 'node:url';
 import { performance } from 'node:perf_hooks';

@@ -20,13 +20,13 @@ importers:
 
   apps/cli:
     dependencies:
-      '@fullsnap/config':
+      '@norbert-fila/config':
         specifier: workspace:*
         version: link:../../packages/config
-      '@fullsnap/core':
+      '@norbert-fila/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@fullsnap/shared':
+      '@norbert-fila/shared':
         specifier: workspace:*
         version: link:../../packages/shared
       cli-table3:
@@ -51,7 +51,7 @@ importers:
 
   packages/config:
     dependencies:
-      '@fullsnap/shared':
+      '@norbert-fila/shared':
         specifier: workspace:*
         version: link:../shared
       zod:
@@ -60,10 +60,10 @@ importers:
 
   packages/core:
     dependencies:
-      '@fullsnap/config':
+      '@norbert-fila/config':
         specifier: workspace:*
         version: link:../config
-      '@fullsnap/shared':
+      '@norbert-fila/shared':
         specifier: workspace:*
         version: link:../shared
       playwright:

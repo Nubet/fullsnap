@@ -1,5 +1,5 @@
 {
-  "name": "@fullsnap/shared",
+  "name": "@norbert-fila/shared",
   "version": "0.1.0",
   "type": "module",
   "main": "./dist/index.js",
@@ -8,5 +8,8 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "clean": "rm -rf dist"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

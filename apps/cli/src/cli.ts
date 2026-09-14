@@ -103,14 +103,23 @@ export function createCli(): Command {
 
       console.log(pc.bold(pc.cyan(`\n📸 Fullsnap: Visual Inspection\n`)));
       
+      let targetUrl = url;
+      if (!targetUrl.startsWith('http://') && !targetUrl.startsWith('https://')) {
+        if (targetUrl.startsWith('localhost') || targetUrl.startsWith('127.0.0.1')) {
+          targetUrl = `http://${targetUrl}`;
+        } else {
+          targetUrl = `https://${targetUrl}`;
+        }
+      }
+      
       const config = await loadConfig(process.cwd());
       const captureService = new CaptureService(config);
       const spinner = ora('Checking target environment...').start();
       
       try {
-        if (url.includes('localhost') || url.includes('127.0.0.1')) {
+        if (targetUrl.includes('localhost') || targetUrl.includes('127.0.0.1')) {
           spinner.text = 'Waiting for local development server to respond...';
-          await waitForServer(url);
+          await waitForServer(targetUrl);
         }
 
         spinner.text = 'Initializing CaptureService...';
@@ -136,7 +145,7 @@ export function createCli(): Command {
         const localISOTime = (new Date(Date.now() - tzOffset)).toISOString().slice(0, -1);
         const timestamp = localISOTime.replace('T', '_').replace(/:/g, '-').split('.')[0];
         
-        const hostDir = new URL(url).hostname.replace(/[^a-z0-9]/gi, '_');
+        const hostDir = new URL(targetUrl).hostname.replace(/[^a-z0-9]/gi, '_');
         const outputDir = join(process.cwd(), config.output || '.', hostDir, timestamp);
         mkdirSync(outputDir, { recursive: true });
 
@@ -149,7 +158,7 @@ export function createCli(): Command {
           targetDevices, 
           config.capture.concurrency, 
           async (device) => {
-            const res = await captureService.capture(url, device, outputDir);
+            const res = await captureService.capture(targetUrl, device, outputDir);
             
             const timeStr = ((res.metrics.loadTime + res.metrics.stabilizationTime) / 1000).toFixed(1) + 's';
             

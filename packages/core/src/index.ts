@@ -64,6 +64,9 @@ export class CaptureService {
     }
     const stabilizationTime = performance.now() - stabStart;
 
+    // Flatten fixed/sticky elements so they don't appear in the middle of the screenshot
+    await stabilizer.flattenFixedElements();
+
     const parsedUrl = new URL(url);
     const hostDir = parsedUrl.hostname.replace(/[^a-z0-9]/gi, '_');
     const fileName = `${device.name}.png`;

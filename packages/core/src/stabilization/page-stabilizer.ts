@@ -66,4 +66,23 @@ export class PageStabilizer {
       `
     });
   }
+
+  public async flattenFixedElements(): Promise<void> {
+    await this.page.evaluate(() => {
+      const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_ELEMENT);
+      let node: Node | null = walker.currentNode;
+      
+      while (node) {
+        if (node instanceof HTMLElement) {
+          const style = window.getComputedStyle(node);
+          if (style.position === 'fixed') {
+            node.style.setProperty('position', 'absolute', 'important');
+          } else if (style.position === 'sticky') {
+            node.style.setProperty('position', 'relative', 'important');
+          }
+        }
+        node = walker.nextNode();
+      }
+    });
+  }
 }

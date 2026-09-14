@@ -16,7 +16,7 @@ export function createCli(): Command {
   program
     .name('fullsnap')
     .description('Automated responsive visual inspection for developers')
-    .version('0.1.0');
+    .version(process.env.CLI_VERSION || 'unknown');
 
   program
     .command('init')

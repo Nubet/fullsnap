@@ -2,8 +2,8 @@ name: Publish to NPM
 
 on:
   push:
-    branches:
-      - main
+    tags:
+      - 'v*' # Run only when new version tags are pushed
   workflow_dispatch:
 
 jobs:

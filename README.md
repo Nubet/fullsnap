@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="./images/fullsnap-banner.png" alt="Fullsnap - screenshot your entire site with a single command" width="100%" />
+</p>
+
 # Fullsnap 📸
 
 [![NPM Version](https://img.shields.io/npm/v/@norbert-fila/fullsnap)](https://www.npmjs.com/package/@norbert-fila/fullsnap)

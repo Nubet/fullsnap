@@ -20,7 +20,7 @@ export const DEFAULT_DEVICES: DeviceProfile[] = [
   
   // Android Devices
   { name: 'pixel-9', viewport: { width: 412, height: 915 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true },
-  { name: 'galaxy-s24', viewport: { width: 360, height: 800 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true },
+  { name: 'galaxy-s24', viewport: { width: 360, height: 780 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true },
   { name: 'pixel-7a', viewport: { width: 393, height: 851 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true },
   { name: 'android-small', viewport: { width: 360, height: 640 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true },
   

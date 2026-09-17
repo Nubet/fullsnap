@@ -1,10 +1,8 @@
 {
   "name": "@norbert-fila/fullsnap",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "type": "module",
-  "bin": {
-    "fullsnap": "./dist/index.js"
-  },
+  "bin": "./dist/index.js",
   "scripts": {
     "build": "tsup",
     "dev": "tsc --watch",

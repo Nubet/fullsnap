@@ -1,7 +1,7 @@
 import { Command } from 'commander';
 import { CaptureService, waitForServer } from '@norbert-fila/core';
 import { loadConfig } from '@norbert-fila/config';
-import { DEFAULT_DEVICES, runWithConcurrency } from '@norbert-fila/shared';
+import { DEFAULT_DEVICES, runWithConcurrency, type DeviceProfile } from '@norbert-fila/shared';
 import { writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { URL } from 'node:url';
@@ -9,6 +9,28 @@ import ora from 'ora';
 import Table from 'cli-table3';
 import pc from 'picocolors';
 import prompts from 'prompts';
+
+function parseCustomDevice(spec: string): DeviceProfile {
+  const match = /^([A-Za-z0-9][A-Za-z0-9_-]*)=(\d+)x(\d+)$/.exec(spec.trim());
+  if (!match) {
+    throw new Error(`Invalid custom device "${spec}". Use the format name=widthxheight, e.g. tablet=768x1024.`);
+  }
+
+  const [, name, widthText, heightText] = match;
+  const width = Number(widthText);
+  const height = Number(heightText);
+  if (width < 1 || height < 1) {
+    throw new Error(`Invalid custom device "${spec}". Width and height must be greater than 0.`);
+  }
+
+  return {
+    name,
+    viewport: { width, height },
+    deviceScaleFactor: 1,
+    isMobile: false,
+    hasTouch: false,
+  };
+}
 
 export function createCli(): Command {
   const program = new Command();
@@ -73,17 +95,17 @@ export function createCli(): Command {
       }
 
       const configContent = `export default {
-  devices: [
-    ${response.devices.map((d: string) => `'${d}'`).join(',\n    ')}
-  ],
-  capture: {
-    format: 'png',
-    animations: 'disable',
-    concurrency: ${response.concurrency}
-  },
-  output: '${response.outputDir}'
-};
-`;
+      devices: [
+        ${response.devices.map((d: string) => `'${d}'`).join(',\n    ')}
+      ],
+      capture: {
+        format: 'png',
+        animations: 'disable',
+        concurrency: ${response.concurrency}
+      },
+      output: '${response.outputDir}'
+    };
+    `;
       writeFileSync(configPath, configContent);
       console.log(pc.green(`\n✔ Created fullsnap.config.js successfully!\n`));
       console.log(`You can now run: ${pc.cyan('fullsnap https://your-website.com')}\n`);
@@ -94,6 +116,12 @@ export function createCli(): Command {
     .argument('[url]', 'URL to capture')
     .option('-a, --all', 'Capture all available devices in the registry')
     .option('-d, --devices <list>', 'Comma-separated list of devices to capture (e.g. "iphone-14,desktop-1920")')
+    .option(
+      '-c, --custom-device <spec>',
+      'Custom device in the format name=widthxheight; repeat for multiple devices',
+      (value: string, previous: string[] = []) => [...previous, value],
+      []
+    )
     .action(async (url: string | undefined, options) => {
       // If the user runs `fullsnap` without a URL or command, show help.
       if (!url) {
@@ -125,16 +153,19 @@ export function createCli(): Command {
         spinner.text = 'Initializing CaptureService...';
         await captureService.init();
         
-        let targetDevices = [];
-        
+        const customDevices = options.customDevice.map(parseCustomDevice);
+        let targetDevices: DeviceProfile[] = [];
+
         if (options.all) {
           targetDevices = [...DEFAULT_DEVICES];
         } else if (options.devices) {
           const requested = options.devices.split(',').map((s: string) => s.trim());
           targetDevices = DEFAULT_DEVICES.filter(d => requested.includes(d.name));
-        } else {
+        } else if (customDevices.length === 0) {
           targetDevices = DEFAULT_DEVICES.filter(d => config.devices.includes(d.name));
         }
+
+        targetDevices.push(...customDevices);
         
         if (targetDevices.length === 0) {
           targetDevices = [...DEFAULT_DEVICES];

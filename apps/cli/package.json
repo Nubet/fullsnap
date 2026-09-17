@@ -1,6 +1,7 @@
 {
   "name": "@norbert-fila/fullsnap",
   "version": "0.1.5",
+  "description": "Capture stable full-page screenshots of websites across desktop, mobile, and custom viewports.",
   "type": "module",
   "bin": {
     "fullsnap": "./dist/index.js"
@@ -9,6 +10,22 @@
     "type": "git",
     "url": "git+https://github.com/Nubet/fullsnap.git"
   },
+  "homepage": "https://github.com/Nubet/fullsnap#readme",
+  "bugs": {
+    "url": "https://github.com/Nubet/fullsnap/issues"
+  },
+  "keywords": [
+    "screenshot",
+    "full-page-screenshot",
+    "website-screenshot",
+    "responsive-testing",
+    "visual-regression",
+    "visual-testing",
+    "cross-browser-testing",
+    "viewport-testing",
+    "playwright",
+    "cli"
+  ],
   "scripts": {
     "build": "tsup",
     "dev": "tsc --watch",

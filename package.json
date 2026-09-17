@@ -8,7 +8,9 @@
   "scripts": {
     "build": "pnpm -r run build",
     "dev": "pnpm -r run dev",
-    "clean": "pnpm -r run clean"
+    "clean": "pnpm -r run clean",
+    "release:version": "node scripts/release-version.mjs",
+    "release:tag": "node scripts/release-tag.mjs"
   },
   "devDependencies": {
     "@types/node": "^20.12.0",

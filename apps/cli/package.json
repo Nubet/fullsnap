@@ -1,6 +1,6 @@
 {
   "name": "@norbert-fila/fullsnap",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Capture stable full-page screenshots of websites across desktop, mobile, and custom viewports.",
   "type": "module",
   "bin": {

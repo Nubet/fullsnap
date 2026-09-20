@@ -9,32 +9,35 @@ export class ScrollEngine {
 
   public async scrollToEnd(): Promise<void> {
     const viewportHeight = this.page.viewportSize()?.height ?? 900;
-    const scrollStep = viewportHeight * 0.8;
-    
-    let scrollHeight = await this.page.evaluate(() => document.documentElement.scrollHeight);
-    let maxScrolls = Math.ceil(scrollHeight / scrollStep);
+    const scrollStep = viewportHeight * 0.9;
 
     // Initial stabilization before any scroll
     await this.stabilizer.waitForStableState();
 
-    for (let i = 0; i < maxScrolls; i++) {
-      // Use mouse.wheel to trigger native scroll and JS-based smooth scrollers (like Lenis)
-      await this.page.mouse.wheel(0, scrollStep);
-      
-      // Tiny delay to let event loop trigger IntersectionObservers before checking stability
-      await this.page.waitForTimeout(150);
-      
-      await this.stabilizer.waitForStableState();
-      
-      // Check if page grew (e.g. infinite scroll loaded new content)
-      const newScrollHeight = await this.page.evaluate(() => document.documentElement.scrollHeight);
-      if (newScrollHeight > scrollHeight) {
-        maxScrolls += Math.ceil((newScrollHeight - scrollHeight) / scrollStep);
-        scrollHeight = newScrollHeight;
+    let previousScrollHeight = 0;
+    for (let i = 0; i < 50; i++) {
+      const state = await this.page.evaluate((step) => {
+        const scrollHeight = Math.max(document.documentElement.scrollHeight, document.body?.scrollHeight ?? 0);
+        const target = Math.min(window.scrollY + step, Math.max(0, scrollHeight - window.innerHeight));
+        // CSS `scroll-behavior: smooth` can make a full-page capture spend
+        // seconds chasing a target that never arrives before the next step.
+        document.documentElement.style.setProperty('scroll-behavior', 'auto', 'important');
+        window.scrollTo(0, target);
+        return { scrollHeight, target };
+      }, scrollStep);
+
+      await this.page.waitForTimeout(50);
+      await this.stabilizer.waitForStableState(250);
+
+      const atEnd = await this.page.evaluate(() =>
+        window.scrollY + window.innerHeight >= Math.max(document.documentElement.scrollHeight, document.body?.scrollHeight ?? 0) - 2
+      );
+      const grew = state.scrollHeight > previousScrollHeight;
+      previousScrollHeight = state.scrollHeight;
+
+      if (atEnd && !grew) {
+        break;
       }
-      
-      // Safety break to prevent infinite loops
-      if (i > 50) break;
     }
   }
 }

@@ -49,7 +49,10 @@ export class CaptureService {
     const loadTime = performance.now() - loadStart;
 
     await page.evaluate(async () => {
-      await document.fonts.ready;
+      await Promise.race([
+        document.fonts.ready,
+        new Promise<void>((resolve) => window.setTimeout(resolve, 1500)),
+      ]);
     });
 
     if (this.config.capture.animations === 'disable') {

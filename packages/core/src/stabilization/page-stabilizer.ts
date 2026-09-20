@@ -3,25 +3,25 @@ import type { Page } from 'playwright';
 export class PageStabilizer {
   constructor(private readonly page: Page) {}
 
-  public async waitForStableState(): Promise<void> {
-    await this.page.evaluate(async () => {
+  public async waitForStableState(maxWait = 500): Promise<void> {
+    await this.page.evaluate(async (maxWait) => {
       await new Promise<void>((resolve) => {
         let timeoutId: number;
         let fallbackTimeoutId: number;
-        const STABILITY_DELAY = 400; // ms without mutations
-        const MAX_WAIT = 5000; // max 5s per step
+        const STABILITY_DELAY = 100;
+        const MAX_WAIT = maxWait;
 
-        const waitForImages = async () => {
-          const images = Array.from(document.images);
-          await Promise.all(
-            images.map((img) => {
-              if (img.complete) return Promise.resolve();
-              return new Promise<void>((res) => {
-                img.addEventListener('load', () => res(), { once: true });
-                img.addEventListener('error', () => res(), { once: true });
-              });
-            })
-          );
+        const waitForImages = () => {
+          const loadingImages = Array.from(document.images).filter((img) => !img.complete);
+          if (loadingImages.length === 0) return Promise.resolve();
+
+          return Promise.race([
+            Promise.all(loadingImages.map((img) => new Promise<void>((res) => {
+              img.addEventListener('load', () => res(), { once: true });
+              img.addEventListener('error', () => res(), { once: true });
+            }))),
+            new Promise<void>((res) => window.setTimeout(res, 200)),
+          ]);
         };
 
         const checkStability = async () => {
@@ -39,8 +39,6 @@ export class PageStabilizer {
         observer.observe(document.body, {
           childList: true,
           subtree: true,
-          attributes: true,
-          characterData: true,
         });
 
         // If it never stabilizes, force resolve after MAX_WAIT
@@ -51,7 +49,7 @@ export class PageStabilizer {
 
         timeoutId = window.setTimeout(checkStability, STABILITY_DELAY);
       });
-    });
+    }, maxWait);
   }
 
   public async disableAnimations(): Promise<void> {

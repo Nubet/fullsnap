@@ -5,6 +5,7 @@ import { DEFAULT_DEVICES, runWithConcurrency, type DeviceProfile } from '@norber
 import { writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { URL } from 'node:url';
+import { performance } from 'node:perf_hooks';
 import ora from 'ora';
 import Table from 'cli-table3';
 import pc from 'picocolors';
@@ -185,6 +186,7 @@ export function createCli(): Command {
         
         spinner.text = `Capturing 0/${total} devices (Concurrency: ${config.capture.concurrency})...`;
 
+        const captureStart = performance.now();
         const results = await runWithConcurrency(
           targetDevices, 
           config.capture.concurrency, 
@@ -206,11 +208,12 @@ export function createCli(): Command {
             return res;
           }
         );
+        const durationMs = Math.round(performance.now() - captureStart);
         
         spinner.succeed(`Capture complete! Output saved to: ${pc.gray(outputDir)}`);
 
         const reportPath = join(outputDir, 'report.json');
-        writeFileSync(reportPath, JSON.stringify({ results }, null, 2));
+        writeFileSync(reportPath, JSON.stringify({ durationMs, results }, null, 2));
 
         const table = new Table({
           head: [

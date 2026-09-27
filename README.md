@@ -10,6 +10,14 @@
 
 It is designed to eliminate the manual work of checking responsive designs.
 
+## Demo
+
+<p align="center">
+  <video src="./images/fullsnap-demo.mp4" controls muted loop playsinline width="100%">
+    <a href="./images/fullsnap-demo.mp4">Watch the Fullsnap demo</a>
+  </video>
+</p>
+
 ## Installation
 
 You can install Fullsnap globally using npm:

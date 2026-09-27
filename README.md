@@ -12,11 +12,7 @@ It is designed to eliminate the manual work of checking responsive designs.
 
 ## Demo
 
-<p align="center">
-  <video src="./images/fullsnap-demo.mp4" controls muted loop playsinline width="100%">
-    <a href="./images/fullsnap-demo.mp4">Watch the Fullsnap demo</a>
-  </video>
-</p>
+https://github.com/user-attachments/assets/8bc251d0-2733-4863-8089-1c406c24b176
 
 ## Installation
 
